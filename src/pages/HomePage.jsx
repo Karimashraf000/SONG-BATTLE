@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTournament } from '../context/TournamentContext';
+import { featuredPlaylists } from '../data/featuredPlaylists';
+import { createSongFromUrl } from '../utils/songUtils';
 import './HomePage.css';
 
 const HomePage = () => {
     const navigate = useNavigate();
-    const { resetTournament, tournamentId } = useTournament();
+    const { resetTournament, tournamentId, loadPlaylist } = useTournament();
 
     // Redirect to bracket if tournament is loaded from URL
     useEffect(() => {
@@ -18,6 +20,19 @@ const HomePage = () => {
     const handleCreateTournament = () => {
         resetTournament();
         navigate('/setup');
+    };
+
+    const handleLoadPlaylist = (playlist) => {
+        resetTournament();
+        try {
+            // Convert playlist URLs to song objects
+            const songs = playlist.songs.map(s => createSongFromUrl(s.url));
+            loadPlaylist(songs);
+            navigate('/setup');
+        } catch (error) {
+            console.error('Error loading playlist:', error);
+            alert('Failed to load playlist: ' + error.message);
+        }
     };
 
     return (
@@ -49,37 +64,58 @@ const HomePage = () => {
                         Create epic music tournaments and let the best song win
                     </p>
 
-                    <div className="features animate-fadeIn delay-500">
-                        <div className="feature card card-glow">
+                    <div className="cta-buttons animate-fadeIn delay-500">
+                        <button
+                            className="btn btn-primary btn-large animate-glow"
+                            onClick={handleCreateTournament}
+                        >
+                            Create New Tournament
+                        </button>
+                    </div>
+
+                    <div className="featured-section animate-fadeIn delay-600">
+                        <h2 className="section-title">Featured Playlists</h2>
+                        <div className="playlists-grid">
+                            {featuredPlaylists.map((playlist) => (
+                                <div
+                                    key={playlist.id}
+                                    className="playlist-card card card-glow"
+                                    onClick={() => handleLoadPlaylist(playlist)}
+                                >
+                                    <div className="playlist-cover">
+                                        <img src={playlist.coverImage} alt={playlist.name} />
+                                        <div className="playlist-overlay">
+                                            <span>▶ Play</span>
+                                        </div>
+                                    </div>
+                                    <div className="playlist-info">
+                                        <h3>{playlist.name}</h3>
+                                        <p>{playlist.description}</p>
+                                        <span className="song-count">{playlist.songs.length} Songs</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="features animate-fadeIn delay-700">
+                        <div className="feature card">
                             <div className="feature-icon">🎵</div>
                             <h3>32 Songs</h3>
                             <p>Add your favorite tracks from YouTube or Spotify</p>
                         </div>
 
-                        <div className="feature card card-glow delay-100">
+                        <div className="feature card">
                             <div className="feature-icon">🏆</div>
                             <h3>Tournament Style</h3>
                             <p>Bracket-based elimination rounds to crown the champion</p>
                         </div>
 
-                        <div className="feature card card-glow delay-200">
+                        <div className="feature card">
                             <div className="feature-icon">🔗</div>
                             <h3>Share & Vote</h3>
                             <p>Get a shareable link and let others vote in real-time</p>
                         </div>
-                    </div>
-
-                    <div className="cta-buttons animate-fadeIn delay-600">
-                        <button
-                            className="btn btn-primary btn-large animate-glow"
-                            onClick={handleCreateTournament}
-                        >
-                            Create Tournament
-                        </button>
-                    </div>
-
-                    <div className="scroll-indicator animate-float delay-700">
-                        <span>↓</span>
                     </div>
                 </div>
             </div>

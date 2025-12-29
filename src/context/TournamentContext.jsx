@@ -121,6 +121,50 @@ export const TournamentProvider = ({ children }) => {
         localStorage.removeItem('currentTournament');
     };
 
+    // Load a playlist (replace current songs)
+    const loadPlaylist = (newSongs) => {
+        if (newSongs.length > 32) {
+            throw new Error('Playlist has too many songs (max 32)');
+        }
+        setSongs(newSongs);
+    };
+
+    // Save playlist to local storage
+    const saveLocalPlaylist = (name) => {
+        if (songs.length === 0) {
+            throw new Error('Cannot save empty playlist');
+        }
+
+        const playlists = getLocalPlaylists();
+        const newPlaylist = {
+            id: `local-${Date.now()}`,
+            name,
+            songs,
+            createdAt: Date.now()
+        };
+
+        playlists.push(newPlaylist);
+        localStorage.setItem('my_playlists', JSON.stringify(playlists));
+        return newPlaylist;
+    };
+
+    // Get saved playlists
+    const getLocalPlaylists = () => {
+        try {
+            const saved = localStorage.getItem('my_playlists');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.error('Error loading playlists', e);
+            return [];
+        }
+    };
+
+    // Delete saved playlist
+    const deleteLocalPlaylist = (id) => {
+        const playlists = getLocalPlaylists().filter(p => p.id !== id);
+        localStorage.setItem('my_playlists', JSON.stringify(playlists));
+    };
+
     const value = {
         songs,
         bracket,
@@ -132,7 +176,11 @@ export const TournamentProvider = ({ children }) => {
         startTournament,
         recordVote,
         getShareableUrl,
-        resetTournament
+        resetTournament,
+        loadPlaylist,
+        saveLocalPlaylist,
+        getLocalPlaylists,
+        deleteLocalPlaylist
     };
 
     return (

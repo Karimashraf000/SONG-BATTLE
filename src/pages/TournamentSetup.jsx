@@ -8,11 +8,14 @@ import './TournamentSetup.css';
 
 const TournamentSetup = () => {
     const navigate = useNavigate();
-    const { songs, addSong, removeSong, startTournament } = useTournament();
+    const { songs, addSong, removeSong, startTournament, saveLocalPlaylist, getLocalPlaylists, loadPlaylist, deleteLocalPlaylist } = useTournament();
     const [songUrl, setSongUrl] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('paste');
+    const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+    const [playlistName, setPlaylistName] = useState('');
+    const [savedPlaylists, setSavedPlaylists] = useState([]);
 
     const handleAddSong = async () => {
         if (!songUrl.trim()) {
@@ -71,13 +74,55 @@ const TournamentSetup = () => {
         }
     };
 
+    const handleSavePlaylist = () => {
+        if (!playlistName.trim()) {
+            setError('Please enter a playlist name');
+            return;
+        }
+        try {
+            saveLocalPlaylist(playlistName);
+            setPlaylistName('');
+            setError('');
+            alert('Playlist saved!');
+            setSavedPlaylists(getLocalPlaylists()); // Refresh list
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const handleOpenPlaylists = () => {
+        setSavedPlaylists(getLocalPlaylists());
+        setShowPlaylistModal(true);
+    };
+
+    const handleLoadPlaylist = (playlist) => {
+        try {
+            loadPlaylist(playlist.songs);
+            setShowPlaylistModal(false);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const handleDeletePlaylist = (id) => {
+        deleteLocalPlaylist(id);
+        setSavedPlaylists(getLocalPlaylists());
+    };
+
     const songsNeeded = 32 - songs.length;
 
     return (
         <div className="tournament-setup">
             <div className="container">
                 <div className="setup-header animate-fadeIn">
-                    <h1>Create Your Tournament</h1>
+                    <div className="header-top">
+                        <h1>Create Your Tournament</h1>
+                        <div className="playlist-controls">
+                            <button className="btn-secondary" onClick={handleOpenPlaylists}>
+                                📂 My Playlists
+                            </button>
+                        </div>
+                    </div>
                     <p className="song-counter">
                         {songs.length} / 32 songs added
                         {songsNeeded > 0 && <span className="songs-needed"> ({songsNeeded} more needed)</span>}
@@ -89,6 +134,35 @@ const TournamentSetup = () => {
                         />
                     </div>
                 </div>
+
+                {showPlaylistModal && (
+                    <div className="modal-overlay animate-fadeIn" onClick={() => setShowPlaylistModal(false)}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h2>My Playlists</h2>
+                                <button className="btn-close" onClick={() => setShowPlaylistModal(false)}>✕</button>
+                            </div>
+                            <div className="saved-playlists-list">
+                                {savedPlaylists.length === 0 ? (
+                                    <p className="empty-state">No saved playlists yet.</p>
+                                ) : (
+                                    savedPlaylists.map(p => (
+                                        <div key={p.id} className="saved-playlist-item">
+                                            <div className="playlist-details">
+                                                <h3>{p.name}</h3>
+                                                <span>{p.songs.length} songs • {new Date(p.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                            <div className="playlist-actions">
+                                                <button className="btn-small btn-primary" onClick={() => handleLoadPlaylist(p)}>Load</button>
+                                                <button className="btn-small btn-danger" onClick={() => handleDeletePlaylist(p.id)}>Delete</button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="add-song-section card card-glow animate-fadeIn delay-200">
                     <div className="add-method-tabs">
@@ -187,16 +261,29 @@ const TournamentSetup = () => {
                     ))}
                 </div>
 
-                {songs.length === 32 && (
-                    <div className="start-tournament-section animate-scaleIn">
+                <div className="action-bar animate-scaleIn">
+                    <div className="save-playlist-group">
+                        <input
+                            type="text"
+                            placeholder="Playlist Name"
+                            value={playlistName}
+                            onChange={(e) => setPlaylistName(e.target.value)}
+                            className="playlist-name-input"
+                        />
+                        <button className="btn-secondary" onClick={handleSavePlaylist} disabled={songs.length === 0}>
+                            💾 Save Playlist
+                        </button>
+                    </div>
+
+                    {songs.length === 32 && (
                         <button
                             className="btn btn-primary btn-large animate-glow"
                             onClick={handleStartTournament}
                         >
                             Start Tournament 🏆
                         </button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );
