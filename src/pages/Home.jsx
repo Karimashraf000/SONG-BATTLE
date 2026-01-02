@@ -111,7 +111,7 @@ const Home = () => {
             </AnimatePresence>
 
             <div className="hero-section">
-                <AnimatedText text="Hazem Arena" className="main-title" />
+                <AnimatedText text="Champions League" className="main-title" />
                 <motion.p
                     className="subtitle"
                     initial={{ opacity: 0, y: 20 }}
